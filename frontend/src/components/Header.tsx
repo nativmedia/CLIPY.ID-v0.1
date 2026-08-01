@@ -2,70 +2,120 @@ import type { Health } from '../types'
 
 interface Props {
   health: Health | null
+  healthLoading: boolean
   onOpenCache: () => void
 }
 
-function Dot({ ok }: { ok: boolean }) {
+type DepItem = { key: string; label: string; ok: boolean }
+
+function StatusDot({ ok }: { ok: boolean }) {
   return (
     <span
-      className={`h-1.5 w-1.5 rounded-full ${ok ? 'bg-brand-400' : 'bg-rose-400'}`}
+      className={`inline-block h-2 w-2 shrink-0 rounded-full ${
+        ok ? 'bg-brand-400' : 'bg-rose-400'
+      }`}
       aria-hidden="true"
     />
   )
 }
 
-export default function Header({ health, onOpenCache }: Props) {
-  const deps: Array<[string, boolean]> = health
+export default function Header({ health, healthLoading, onOpenCache }: Props) {
+  const deps: DepItem[] = health
     ? [
-        ['ffmpeg', health.ffmpeg && health.ffprobe],
-        ['yt-dlp', health.yt_dlp],
-        ['whisper', health.faster_whisper],
-        ['opencv', health.opencv],
+        { key: 'ffmpeg', label: 'FFmpeg', ok: health.ffmpeg && health.ffprobe },
+        { key: 'ytdlp', label: 'yt-dlp', ok: health.yt_dlp },
+        { key: 'whisper', label: 'Whisper', ok: health.faster_whisper },
+        { key: 'opencv', label: 'OpenCV', ok: health.opencv },
       ]
     : []
 
-  const allOk = deps.length > 0 && deps.every(([, ok]) => ok)
+  const allOk = deps.length > 0 && deps.every((d) => d.ok)
+  const offline = !healthLoading && health === null
+  const readyLabel = healthLoading
+    ? 'Memeriksa sistem…'
+    : offline
+      ? 'Backend tidak terhubung'
+      : allOk
+        ? 'Sistem siap'
+        : 'Dependensi belum lengkap'
 
   return (
-    <header className="sticky top-0 z-30 border-b border-white/10 bg-ink-950/85 backdrop-blur">
-      <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 sm:px-6">
-        <div className="flex items-center gap-2.5">
-          <div className="grid h-9 w-9 place-items-center rounded-xl bg-brand-400 shadow-lg shadow-brand-500/15">
-            <img src="./klipersid.svg" alt="" className="h-5.5 w-5.5" aria-hidden="true" />
-          </div>
-          <div className="leading-tight">
-            <h1 className="text-base font-bold text-white">klipersid</h1>
-            <p className="text-[11px] text-slate-400">Video panjang → shorts 9:16, sepenuhnya lokal</p>
-          </div>
-        </div>
-
-        <div className="ml-auto flex items-center gap-2">
+    <header className="sticky top-0 z-30 border-b border-white/[0.07] bg-ink-950/90 backdrop-blur-md">
+      <div className="mx-auto flex max-w-content flex-wrap items-center gap-x-4 gap-y-2.5 px-4 py-3 sm:px-6">
+        <a href="#main" className="flex min-w-0 items-center gap-3 rounded-xl">
           <div
-            className="hidden items-center gap-3 rounded-xl border border-white/10 bg-ink-900/60 px-3 py-1.5 md:flex"
-            title={allOk ? 'Semua dependensi siap' : 'Sebagian dependensi belum siap'}
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand-500 shadow-lift"
+            aria-hidden="true"
           >
-            {deps.map(([name, ok]) => (
-              <span key={name} className="flex items-center gap-1.5 text-[11px] text-slate-300">
-                <Dot ok={ok} />
-                {name}
+            <img src="./klipersid.svg" alt="" className="h-5 w-5 brightness-0" />
+          </div>
+          <div className="min-w-0 leading-tight">
+            <p className="text-base font-bold tracking-tight text-white">klipersid</p>
+            <p className="truncate text-xs text-slate-400">
+              Pemrosesan lokal · video panjang → shorts 9:16
+            </p>
+          </div>
+        </a>
+
+        <div className="ml-auto flex items-center gap-2 sm:gap-2.5">
+          {/* Desktop: detailed dependency strip */}
+          <div
+            className="hidden items-center gap-1 rounded-xl border border-white/[0.08] bg-ink-900/70 px-2 py-1.5 lg:flex"
+            role="status"
+            aria-label={readyLabel}
+          >
+            {healthLoading && (
+              <span className="px-2 text-xs text-slate-500">Memeriksa dependensi…</span>
+            )}
+            {offline && (
+              <span className="flex items-center gap-1.5 px-2 text-xs text-amber-300">
+                <StatusDot ok={false} />
+                Backend tidak terhubung
+              </span>
+            )}
+            {deps.map((d) => (
+              <span
+                key={d.key}
+                className="flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs text-slate-300"
+                title={d.ok ? `${d.label} siap` : `${d.label} tidak terdeteksi`}
+              >
+                <StatusDot ok={d.ok} />
+                <span className={d.ok ? '' : 'text-rose-300'}>{d.label}</span>
+                <span className="sr-only">{d.ok ? 'siap' : 'tidak tersedia'}</span>
               </span>
             ))}
-            {!health && <span className="text-[11px] text-slate-500">memeriksa…</span>}
           </div>
 
+          {/* Compact status for smaller screens */}
           <span
-            className={`chip md:hidden ${
-              allOk ? 'border-brand-400/30 bg-brand-500/10 text-brand-400' : 'border-rose-400/30 bg-rose-500/10 text-rose-300'
+            className={`status-pill lg:hidden ${
+              healthLoading
+                ? 'border-white/10 bg-white/5 text-slate-400'
+                : offline
+                  ? 'border-amber-400/30 bg-amber-400/10 text-amber-300'
+                  : allOk
+                    ? 'border-brand-400/30 bg-brand-500/10 text-brand-300'
+                    : 'border-amber-400/30 bg-amber-400/10 text-amber-300'
             }`}
+            role="status"
           >
-            {health ? (allOk ? 'siap' : 'periksa dependensi') : '…'}
+            <StatusDot
+              ok={!healthLoading && !offline && allOk}
+            />
+            {healthLoading ? 'Memeriksa…' : offline ? 'Offline' : allOk ? 'Siap' : 'Periksa dependensi'}
           </span>
 
-          <button type="button" onClick={onOpenCache} className="btn-ghost !px-3 !py-2 text-xs">
-            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+          <button
+            type="button"
+            onClick={onOpenCache}
+            className="btn-secondary !min-h-[40px] !px-3 !py-2 text-xs sm:text-sm"
+            aria-label="Bersihkan cache data lokal"
+          >
+            <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
               <path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             <span className="hidden sm:inline">Bersihkan Cache</span>
+            <span className="sm:hidden">Cache</span>
           </button>
         </div>
       </div>

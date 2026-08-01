@@ -9,30 +9,45 @@ interface Props {
 
 function CopyButton({ text, label = 'Salin' }: { text: string; label?: string }) {
   const [done, setDone] = useState(false)
+  const [failed, setFailed] = useState(false)
+
+  if (!text.trim()) return null
+
   return (
     <button
       type="button"
       onClick={async () => {
-        if (await copyText(text)) {
+        const ok = await copyText(text)
+        if (ok) {
           setDone(true)
+          setFailed(false)
           window.setTimeout(() => setDone(false), 1600)
+        } else {
+          setFailed(true)
+          window.setTimeout(() => setFailed(false), 2000)
         }
       }}
-      className="shrink-0 rounded-lg border border-white/15 px-2 py-1 text-[10.5px] font-medium text-slate-300 transition-colors hover:bg-white/5"
+      className="min-h-[36px] shrink-0 rounded-lg border border-white/12 px-2.5 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:bg-white/5 hover:text-white"
+      aria-live="polite"
     >
-      {done ? 'Tersalin ✓' : label}
+      {done ? 'Tersalin ✓' : failed ? 'Gagal salin' : label}
     </button>
   )
 }
 
-function Row({ title, value }: { title: string; value: string }) {
+function FieldBlock({ title, value, multiline = false }: { title: string; value: string; multiline?: boolean }) {
+  if (!value?.trim()) return null
   return (
     <div>
-      <div className="mb-1 flex items-center justify-between gap-2">
-        <span className="label">{title}</span>
+      <div className="mb-1.5 flex items-center justify-between gap-2">
+        <h4 className="label text-slate-300">{title}</h4>
         <CopyButton text={value} />
       </div>
-      <p className="whitespace-pre-wrap rounded-xl border border-white/10 bg-ink-950/50 p-2.5 text-[11.5px] leading-relaxed text-slate-300">
+      <p
+        className={`rounded-xl border border-white/[0.07] bg-ink-950/55 p-3 text-sm leading-relaxed text-slate-200 ${
+          multiline ? 'whitespace-pre-wrap' : ''
+        }`}
+      >
         {value}
       </p>
     </div>
@@ -44,53 +59,63 @@ function AssetBlock({ clip }: { clip: Clip }) {
   if (!a) return null
   const thumb = mediaUrl(a.thumbnail_url ?? clip.thumbnail_url)
   const video = mediaUrl(clip.video_url)
+  const clipNo = clip.index + 1
 
   return (
-    <div className="card p-4">
-      <div className="flex flex-col gap-4 sm:flex-row">
-        {thumb && (
-          <div className="sm:w-36 sm:shrink-0">
+    <article className="card p-4 sm:p-5" aria-labelledby={`asset-clip-${clip.id}`}>
+      <div className="flex flex-col gap-5 lg:flex-row">
+        {/* Thumbnail recommendation — visual hierarchy first */}
+        <div className="mx-auto w-full max-w-[9.5rem] shrink-0 sm:mx-0">
+          {thumb ? (
             <img
               src={thumb}
-              alt={`Thumbnail rekomendasi klip ${clip.index + 1}`}
+              alt={`Rekomendasi thumbnail klip ${clipNo}`}
               loading="lazy"
-              className="aspect-[9/16] w-full rounded-xl border border-white/10 object-cover"
+              className="aspect-[9/16] w-full rounded-xl border border-white/10 object-cover shadow-lift"
             />
-            <p className="mt-1.5 text-center text-[10px] text-slate-500">Rekomendasi thumbnail</p>
-          </div>
-        )}
+          ) : (
+            <div className="grid aspect-[9/16] w-full place-items-center rounded-xl border border-white/10 bg-ink-850 text-xs text-slate-500">
+              Thumbnail tidak tersedia
+            </div>
+          )}
+          <p className="mt-2 text-center text-xs text-slate-500">Rekomendasi thumbnail</p>
+        </div>
 
-        <div className="min-w-0 flex-1 space-y-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="chip border-white/10 bg-white/5 text-slate-300">Klip {clip.index + 1}</span>
-            <span className="chip border-brand-400/40 bg-brand-500/15 text-brand-400">Skor {clip.score}</span>
-            <span className="text-[11px] tabular-nums text-slate-500">
+        <div className="min-w-0 flex-1 space-y-4">
+          <header className="flex flex-wrap items-center gap-2">
+            <h3 id={`asset-clip-${clip.id}`} className="text-base font-bold text-white">
+              Klip {clipNo}
+            </h3>
+            <span className="chip border-brand-400/35 bg-brand-500/12 text-brand-300">
+              Skor {Math.round(clip.score)}
+            </span>
+            <span className="text-xs tabular-nums text-slate-500">
               {formatDuration(clip.start)} – {formatDuration(clip.end)} · {formatDuration(clip.duration)}
             </span>
             {video && (
               <a
                 href={video}
                 download
-                className="ml-auto rounded-lg border border-brand-400/40 bg-brand-500/10 px-2.5 py-1 text-[10.5px] font-semibold text-brand-400 hover:bg-brand-500/20"
+                className="btn-primary ml-auto !min-h-[36px] !px-3 !py-1.5 text-xs"
               >
                 Unduh MP4
               </a>
             )}
-          </div>
+          </header>
 
-          <Row title={`Judul (${a.title.length}/100)`} value={a.title} />
-          <Row title="Hook" value={a.hook} />
-          <Row title={`Deskripsi SEO (${a.description.length}/5000)`} value={a.description} />
+          <FieldBlock title={`Judul (${a.title.length}/100)`} value={a.title} />
+          <FieldBlock title="Hook pembuka" value={a.hook} />
+          <FieldBlock title={`Deskripsi SEO (${a.description.length}/5000)`} value={a.description} multiline />
 
           {a.hashtags.length > 0 && (
             <div>
-              <div className="mb-1 flex items-center justify-between gap-2">
-                <span className="label">Hashtag ({a.hashtags.length})</span>
+              <div className="mb-1.5 flex items-center justify-between gap-2">
+                <h4 className="label text-slate-300">Hashtag ({a.hashtags.length})</h4>
                 <CopyButton text={a.hashtags.join(' ')} />
               </div>
-              <div className="flex flex-wrap gap-1">
+              <div className="flex flex-wrap gap-1.5">
                 {a.hashtags.map((h) => (
-                  <span key={h} className="chip border-accent-400/30 bg-accent-500/10 text-accent-400">
+                  <span key={h} className="chip border-accent-400/30 bg-accent-500/10 text-accent-300">
                     {h}
                   </span>
                 ))}
@@ -100,27 +125,39 @@ function AssetBlock({ clip }: { clip: Clip }) {
 
           {a.keywords.length > 0 && (
             <div>
-              <div className="mb-1 flex items-center justify-between gap-2">
-                <span className="label">Keyword SEO ({a.keywords.length})</span>
+              <div className="mb-1.5 flex items-center justify-between gap-2">
+                <h4 className="label text-slate-300">Keyword SEO ({a.keywords.length})</h4>
                 <CopyButton text={a.keywords.join(', ')} />
               </div>
-              <p className="text-[11.5px] text-slate-400">{a.keywords.join(' · ')}</p>
+              <p className="text-sm leading-relaxed text-slate-400">{a.keywords.join(' · ')}</p>
+            </div>
+          )}
+
+          {a.tags.length > 0 && (
+            <div>
+              <div className="mb-1.5 flex items-center justify-between gap-2">
+                <h4 className="label text-slate-300">Tag ({a.tags.length})</h4>
+                <CopyButton text={a.tags.join(', ')} />
+              </div>
+              <p className="text-sm leading-relaxed text-slate-400">{a.tags.join(', ')}</p>
             </div>
           )}
 
           {Object.keys(a.platform_tags).length > 0 && (
             <div>
-              <span className="label mb-1.5">Tag per platform</span>
+              <h4 className="label mb-2 text-slate-300">Tag per platform</h4>
               <div className="grid gap-2 sm:grid-cols-2">
                 {Object.entries(a.platform_tags).map(([platform, tags]) => (
-                  <div key={platform} className="rounded-xl border border-white/10 bg-ink-950/40 p-2.5">
-                    <div className="mb-1 flex items-center justify-between gap-2">
-                      <span className="text-[11px] font-semibold text-slate-200">
+                  <div key={platform} className="card-soft p-3">
+                    <div className="mb-1.5 flex items-center justify-between gap-2">
+                      <span className="text-sm font-semibold text-slate-200">
                         {PLATFORM_NAMES[platform] ?? platform}
                       </span>
-                      <CopyButton text={tags.join(', ')} />
+                      {tags.length > 0 && <CopyButton text={tags.join(', ')} />}
                     </div>
-                    <p className="text-[10.5px] leading-relaxed text-slate-400">{tags.join(', ')}</p>
+                    <p className="text-xs leading-relaxed text-slate-400">
+                      {tags.length > 0 ? tags.join(', ') : '—'}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -128,7 +165,7 @@ function AssetBlock({ clip }: { clip: Clip }) {
           )}
         </div>
       </div>
-    </div>
+    </article>
   )
 }
 
@@ -137,14 +174,16 @@ export default function AssetsPanel({ clips }: Props) {
   if (withAssets.length === 0) return null
 
   return (
-    <section className="animate-fade-up space-y-3">
+    <section className="animate-fade-up space-y-4" aria-labelledby="assets-title">
       <div>
-        <h2 className="text-sm font-bold text-white">Aset pendukung ({withAssets.length})</h2>
-        <p className="text-[11px] text-slate-400">
-          Judul, hook, deskripsi SEO, hashtag, tag per platform, dan rekomendasi thumbnail — siap dipakai unggah manual.
+        <h2 id="assets-title" className="section-title">
+          Aset publikasi ({withAssets.length})
+        </h2>
+        <p className="section-sub">
+          Judul, hook, deskripsi SEO, hashtag, tag platform, dan thumbnail — siap disalin untuk unggah manual.
         </p>
       </div>
-      <div className="space-y-3">
+      <div className="space-y-4">
         {withAssets.map((c) => (
           <AssetBlock key={c.id} clip={c} />
         ))}

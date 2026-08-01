@@ -18,10 +18,10 @@ export function formatBytes(bytes: number): string {
   return `${value.toFixed(value >= 10 || i === 0 ? 0 : 1)} ${units[i]}`
 }
 
-/** Score bands drive the badge colour in the clip grid. */
+/** Score bands drive the badge colour in the clip grid (colour + is never sole cue). */
 export function scoreTone(score: number): string {
-  if (score >= 80) return 'border-brand-400/40 bg-brand-500/15 text-brand-400'
-  if (score >= 60) return 'border-amber-400/40 bg-amber-400/15 text-amber-300'
+  if (score >= 80) return 'border-brand-400/40 bg-brand-500/15 text-brand-300'
+  if (score >= 60) return 'border-amber-400/40 bg-amber-400/15 text-amber-200'
   return 'border-slate-400/30 bg-white/5 text-slate-300'
 }
 

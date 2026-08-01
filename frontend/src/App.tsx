@@ -13,6 +13,7 @@ import { ACTIVE_STAGES, DEFAULT_OPTIONS } from './types'
 
 export default function App() {
   const [health, setHealth] = useState<Health | null>(null)
+  const [healthLoading, setHealthLoading] = useState(true)
   const [labels, setLabels] = useState<MomentLabel[]>([])
   const [options, setOptions] = useState<JobOptions>(DEFAULT_OPTIONS)
   const [jobId, setJobId] = useState<string | null>(null)
@@ -24,8 +25,17 @@ export default function App() {
 
   const { job, status, setJob, patchJob } = useJobSocket(jobId)
 
+  const refreshHealth = useCallback(() => {
+    setHealthLoading(true)
+    api
+      .health()
+      .then((h) => setHealth(h))
+      .catch(() => setHealth(null))
+      .finally(() => setHealthLoading(false))
+  }, [])
+
   useEffect(() => {
-    api.health().then(setHealth, () => setHealth(null))
+    refreshHealth()
     api.momentLabels().then(setLabels, () => setLabels([]))
     // Recover the newest job after a refresh. The worker keeps running in the
     // backend, so hiding its progress here makes a healthy job look lost.
@@ -39,10 +49,11 @@ export default function App() {
       },
       () => undefined,
     )
-  }, [setJob])
+  }, [setJob, refreshHealth])
 
   const running = job !== null && ACTIVE_STAGES.includes(job.stage)
   const clips = useMemo(() => job?.clips ?? [], [job])
+  const backendOffline = !healthLoading && health === null
 
   // Pre-select everything the first time a finished job's clips arrive.
   useEffect(() => {
@@ -103,7 +114,6 @@ export default function App() {
         ...prev,
         clips: prev.clips.map((c) => byId.get(c.id) ?? c),
       }))
-      // Scroll the freshly generated assets into view.
       window.setTimeout(() => {
         document.getElementById('assets')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
       }, 80)
@@ -122,56 +132,90 @@ export default function App() {
   }, [setJob])
 
   const assetClips = useMemo(() => clips.filter((c) => c.assets !== null), [clips])
+
   const missingDeps = health
-    ? [
-        !health.ffmpeg && 'ffmpeg',
-        !health.yt_dlp && 'yt-dlp',
-        !health.faster_whisper && 'faster-whisper',
-        !health.opencv && 'opencv',
-      ].filter(Boolean)
+    ? (
+        [
+          !health.ffmpeg && 'FFmpeg',
+          !health.yt_dlp && 'yt-dlp',
+          !health.faster_whisper && 'faster-whisper',
+          !health.opencv && 'OpenCV',
+        ] as Array<string | false>
+      ).filter((x): x is string => Boolean(x))
     : []
 
-  return (
-    <div className="min-h-screen">
-      <Header health={health} onOpenCache={() => setCacheOpen(true)} />
+  const formDisabledReason = running
+    ? 'Tunggu hingga proses berjalan selesai, atau batalkan dulu.'
+    : backendOffline
+      ? 'Backend tidak terhubung. Jalankan server klipersid lalu muat ulang.'
+      : null
 
-      <main className="mx-auto w-full max-w-6xl space-y-5 px-4 pb-24 pt-6 sm:px-6">
-        {missingDeps.length > 0 && (
+  return (
+    <div className="flex min-h-dvh flex-col">
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-xl focus:bg-brand-500 focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-ink-950"
+      >
+        Loncat ke konten utama
+      </a>
+
+      <Header health={health} healthLoading={healthLoading} onOpenCache={() => setCacheOpen(true)} />
+
+      <main id="main" className="mx-auto w-full max-w-content flex-1 space-y-5 px-4 pb-28 pt-6 sm:px-6 sm:pb-24">
+        {backendOffline && (
           <div
             role="alert"
-            className="card border-amber-500/40 bg-amber-500/10 p-4 text-sm text-amber-100"
+            className="card flex flex-col gap-3 border-amber-500/35 bg-amber-500/10 p-4 sm:flex-row sm:items-center"
           >
-            <p className="font-semibold">Dependensi belum lengkap</p>
-            <p className="mt-1 text-xs leading-relaxed text-amber-200/90">
-              Tidak terdeteksi: {missingDeps.join(', ')}. Sebagian tahap pipeline akan gagal. Pasang dependensi lalu
-              muat ulang halaman ini.
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-amber-100">Backend tidak terhubung</p>
+              <p className="mt-1 text-sm leading-relaxed text-amber-100/85">
+                Tidak dapat menjangkau API klipersid. Pastikan backend berjalan di mesin ini, lalu periksa lagi.
+              </p>
+            </div>
+            <button type="button" onClick={refreshHealth} className="btn-secondary shrink-0 text-sm">
+              Coba lagi
+            </button>
+          </div>
+        )}
+
+        {!backendOffline && missingDeps.length > 0 && (
+          <div role="alert" className="card border-amber-500/35 bg-amber-500/10 p-4">
+            <p className="text-sm font-semibold text-amber-100">Dependensi belum lengkap</p>
+            <p className="mt-1 text-sm leading-relaxed text-amber-100/85">
+              Tidak terdeteksi: <span className="font-medium">{missingDeps.join(', ')}</span>. Sebagian tahap
+              pipeline dapat gagal. Pasang dependensi yang hilang, lalu muat ulang halaman.
             </p>
           </div>
         )}
 
-        <section className="animate-fade-up space-y-5">
-          <div>
-            <h1 className="text-2xl font-black tracking-tight text-white sm:text-3xl">
-              Ubah video panjang jadi <span className="text-brand-400">shorts</span> siap unggah
-            </h1>
-            <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-slate-400">
-              Tempel URL YouTube, klipersid akan mengunduh, mentranskrip, menilai momen terbaik, lalu merender klip 9:16
-              bersubtitle — semuanya berjalan lokal di komputer Anda.
-            </p>
-          </div>
-
-          <UrlForm onSubmit={start} busy={starting} disabled={running} />
+        <section className="animate-fade-up space-y-4" aria-label="Input dan pengaturan">
+          <UrlForm
+            onSubmit={start}
+            busy={starting}
+            disabled={running || backendOffline}
+            disabledReason={formDisabledReason}
+          />
           <OptionsPanel options={options} onChange={setOptions} labels={labels} disabled={running} />
         </section>
 
         {error && (
           <div
             role="alert"
-            className="card flex items-start gap-3 border-rose-500/40 bg-rose-500/10 p-4 text-sm text-rose-100"
+            className="card flex items-start gap-3 border-rose-500/35 bg-rose-500/10 p-4 text-sm text-rose-100"
           >
-            <span aria-hidden="true">⚠</span>
-            <p className="flex-1 leading-relaxed">{error}</p>
-            <button type="button" onClick={() => setError(null)} className="text-xs text-rose-300 hover:text-rose-100">
+            <span
+              className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-rose-500/20 text-xs font-bold"
+              aria-hidden="true"
+            >
+              !
+            </span>
+            <p className="min-w-0 flex-1 leading-relaxed">{error}</p>
+            <button
+              type="button"
+              onClick={() => setError(null)}
+              className="min-h-[36px] shrink-0 rounded-lg px-2 text-xs font-medium text-rose-200 hover:bg-rose-500/15 hover:text-rose-50"
+            >
               Tutup
             </button>
           </div>
@@ -195,21 +239,36 @@ export default function App() {
             )}
 
             {job.stage === 'done' && clips.length === 0 && (
-              <div className="card p-6 text-center text-sm text-slate-400">
-                Tidak ada momen yang melewati ambang skor {job.options.min_score}. Coba turunkan skor minimum atau
-                longgarkan filter momen, lalu jalankan ulang.
+              <div className="card p-8 text-center" role="status">
+                <p className="text-base font-semibold text-white">Belum ada klip yang lolos filter</p>
+                <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-slate-400">
+                  Tidak ada momen yang melewati ambang skor {job.options.min_score}
+                  {job.options.moment_filter.length > 0 ? ' dengan filter momen aktif' : ''}. Turunkan skor
+                  minimum atau longgarkan filter di pengaturan lanjutan, lalu jalankan ulang.
+                </p>
+                <button type="button" onClick={reset} className="btn-primary mt-5">
+                  Atur ulang &amp; coba lagi
+                </button>
+              </div>
+            )}
+
+            {(job.stage === 'failed' || job.stage === 'cancelled') && (
+              <div className="flex flex-wrap justify-center gap-2">
+                <button type="button" onClick={reset} className="btn-primary">
+                  Coba proses lagi
+                </button>
               </div>
             )}
 
             {assetClips.length > 0 && (
-              <div id="assets" className="scroll-mt-20">
+              <div id="assets" className="scroll-mt-24">
                 <AssetsPanel clips={assetClips} />
               </div>
             )}
 
-            {!running && (
-              <div className="flex justify-center pt-2">
-                <button type="button" onClick={reset} className="btn-ghost">
+            {!running && job.stage === 'done' && (
+              <div className="flex justify-center pt-1">
+                <button type="button" onClick={reset} className="btn-ghost text-sm">
                   Proses video lain
                 </button>
               </div>
@@ -218,8 +277,8 @@ export default function App() {
         )}
       </main>
 
-      <footer className="border-t border-white/5 py-6 text-center text-xs text-slate-600">
-        klipersid — pemrosesan lokal, tanpa unggahan ke layanan pihak ketiga.
+      <footer className="border-t border-white/[0.06] py-5 text-center text-xs text-slate-600">
+        <p>klipersid — pemrosesan lokal, tanpa unggahan ke layanan pihak ketiga.</p>
       </footer>
 
       <CacheDialog open={cacheOpen} onClose={() => setCacheOpen(false)} onCleared={reset} />
