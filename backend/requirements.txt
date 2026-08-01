@@ -1,0 +1,19 @@
+# Clipper backend dependencies (Python 3.10 - 3.13, Windows/macOS/Linux)
+
+# --- Web server ---
+fastapi>=0.115
+uvicorn[standard]>=0.30
+python-multipart>=0.0.9
+pydantic>=2.7
+
+# --- Video acquisition ---
+yt-dlp>=2024.8.6
+
+# --- Numerics / vision ---
+numpy>=1.26
+# The vision pipeline uses the legacy Haar Cascade API. OpenCV 5 no longer
+# exposes CascadeClassifier in its Python bindings, so keep this on 4.x.
+opencv-python-headless>=4.9,<5
+
+# --- Speech-to-text (local). ctranslate2 backend, CPU or CUDA ---
+faster-whisper>=1.0.3
