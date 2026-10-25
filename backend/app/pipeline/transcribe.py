@@ -109,8 +109,14 @@ def transcribe(
         on_progress(2.0, "Model Whisper siap, memulai transkripsi...")
 
     try:
+        # FFmpeg already produces mono 16 kHz PCM. Pass samples directly so
+        # Whisper does not reopen the WAV through an incompatible PyAV decoder.
+        from .audio_features import load_wav_mono
+        samples, sample_rate = load_wav_mono(audio_path)
+        if sample_rate != 16000:
+            raise TranscriptionError('Audio transkripsi harus PCM 16 kHz. Ekstrak ulang audio dengan FFmpeg.')
         raw_segments, info = model.transcribe(
-            str(audio_path),
+            samples,
             language=language,
             word_timestamps=True,
             vad_filter=True,

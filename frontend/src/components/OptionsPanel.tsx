@@ -25,7 +25,7 @@ const WHISPER_MODELS = [
   { value: 'tiny', name: 'tiny — tercepat' },
   { value: 'base', name: 'base' },
   { value: 'small', name: 'small — seimbang' },
-  { value: 'medium', name: 'medium — paling akurat' },
+  { value: 'medium', name: 'medium — lebih detail, lebih berat' },
 ]
 
 function Slider({
@@ -103,7 +103,7 @@ function Toggle({
       />
       <span className="leading-tight">
         <span className="block text-sm font-semibold text-slate-100">{title}</span>
-        <span className="mt-0.5 block text-[11px] text-slate-400">{hint}</span>
+        <span className="mt-0.5 block text-xs text-slate-400">{hint}</span>
       </span>
     </label>
   )
@@ -133,8 +133,8 @@ export default function OptionsPanel({ options, onChange, labels, disabled }: Pr
           <path d="M4 6h16M4 12h10M4 18h6" strokeLinecap="round" />
         </svg>
         <span className="flex-1">
-          <span className="block text-sm font-semibold text-slate-100">Pengaturan Lanjutan</span>
-          <span className="text-[11px] text-slate-400">
+          <span className="block text-sm font-semibold text-slate-100">Pengaturan klip</span>
+          <span className="text-xs text-slate-400">
             {options.max_clips} klip · {options.min_clip_seconds}–{options.max_clip_seconds}s · skor min{' '}
             {options.min_score} · subtitle {options.subtitle_style}
           </span>
@@ -177,7 +177,7 @@ export default function OptionsPanel({ options, onChange, labels, disabled }: Pr
               label="Durasi minimal"
               value={options.min_clip_seconds}
               min={5}
-              max={Math.max(5, options.max_clip_seconds - 1)}
+              max={Math.min(120, Math.max(5, options.max_clip_seconds - 1))}
               suffix="s"
               disabled={disabled}
               onChange={(v) => set('min_clip_seconds', Math.min(v, options.max_clip_seconds - 1))}
@@ -211,7 +211,7 @@ export default function OptionsPanel({ options, onChange, labels, disabled }: Pr
                   }`}
                 >
                   <span className="block text-sm font-semibold text-slate-100">{s.name}</span>
-                  <span className="mt-0.5 block text-[11px] text-slate-400">{s.hint}</span>
+                  <span className="mt-0.5 block text-xs text-slate-400">{s.hint}</span>
                 </button>
               ))}
             </div>
@@ -241,7 +241,7 @@ export default function OptionsPanel({ options, onChange, labels, disabled }: Pr
                 <button
                   type="button"
                   onClick={() => set('moment_filter', [])}
-                  className="text-[11px] font-medium text-brand-400 hover:underline"
+                  className="text-xs font-medium text-brand-400 hover:underline"
                 >
                   Reset
                 </button>
@@ -268,7 +268,7 @@ export default function OptionsPanel({ options, onChange, labels, disabled }: Pr
                 )
               })}
             </div>
-            <p className="mt-2 text-[11px] text-slate-500">
+            <p className="mt-2 text-xs text-slate-500">
               Kosong berarti semua jenis momen dipertimbangkan.
             </p>
           </div>

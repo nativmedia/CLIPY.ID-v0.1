@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { api, ApiError } from '../api'
 import { formatBytes } from '../lib/format'
 import type { CacheSize } from '../types'
@@ -10,6 +10,12 @@ interface Props {
 }
 
 export default function CacheDialog({ open, onClose, onCleared }: Props) {
+  const dialogRef = useRef<HTMLDialogElement>(null)
+  useEffect(() => {
+    const dialog = dialogRef.current
+    if (open && dialog && !dialog.open) dialog.showModal()
+    return () => { if (dialog?.open) dialog.close() }
+  }, [open])
   const [size, setSize] = useState<CacheSize | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -20,9 +26,7 @@ export default function CacheDialog({ open, onClose, onCleared }: Props) {
     setSize(null)
     api.cacheSize().then(setSize, () => setError('Gagal membaca ukuran cache.'))
 
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
+
   }, [open, onClose])
 
   if (!open) return null
@@ -42,12 +46,12 @@ export default function CacheDialog({ open, onClose, onCleared }: Props) {
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4 backdrop-blur-sm"
-      role="dialog"
-      aria-modal="true"
+    <dialog
+      ref={dialogRef}
+      className="cache-dialog"
+      onCancel={(e) => { e.preventDefault(); if (!busy) onClose() }}
       aria-labelledby="cache-title"
-      onClick={(e) => e.target === e.currentTarget && onClose()}
+      onClick={(e) => { if (e.target === e.currentTarget && !busy) onClose() }}
     >
       <div className="card w-full max-w-md p-5">
         <h2 id="cache-title" className="text-base font-bold text-white">
@@ -74,13 +78,13 @@ export default function CacheDialog({ open, onClose, onCleared }: Props) {
         </dl>
 
         {error && (
-          <p role="alert" className="mt-3 rounded-xl border border-rose-500/40 bg-rose-500/10 p-2.5 text-xs text-rose-200">
+          <p role="alert" className="mt-3 rounded-xl border border-slate-500/40 bg-slate-500/10 p-2.5 text-xs text-slate-200">
             {error}
           </p>
         )}
 
         <div className="mt-4 flex gap-2">
-          <button type="button" onClick={onClose} className="btn-ghost flex-1">
+          <button type="button" onClick={onClose} disabled={busy} className="btn-ghost flex-1">
             Batal
           </button>
           <button
@@ -93,6 +97,6 @@ export default function CacheDialog({ open, onClose, onCleared }: Props) {
           </button>
         </div>
       </div>
-    </div>
+    </dialog>
   )
 }

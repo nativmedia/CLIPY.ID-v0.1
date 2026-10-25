@@ -31,7 +31,7 @@ export default function ClipGrid({
           <h2 className="text-sm font-bold text-white">
             {clips.length} klip siap ditinjau
           </h2>
-          <p className="text-[11px] text-slate-400">
+          <p className="text-xs text-slate-400">
             Centang klip yang ingin dilanjutkan, lalu konfirmasi untuk membuat judul, deskripsi, hashtag, dan thumbnail.
           </p>
         </div>
@@ -47,7 +47,7 @@ export default function ClipGrid({
         </div>
       </div>
 
-      <div className="scroll-slim grid max-h-[75vh] grid-cols-2 gap-3 overflow-y-auto pr-1 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="scroll-slim grid max-h-[75vh] grid-cols-1 sm:grid-cols-2 gap-3 overflow-y-auto pr-1 lg:grid-cols-3 xl:grid-cols-4">
         {clips.map((clip) => (
           <ClipCard
             key={clip.id}
@@ -79,7 +79,7 @@ export default function ClipGrid({
                 Menyiapkan aset…
               </>
             ) : (
-              'Konfirmasi Pilihan'
+              'Buat aset publikasi'
             )}
           </button>
         </div>

@@ -1,4 +1,4 @@
-"""Clipper backend: FastAPI app, REST routes and the progress WebSocket."""
+"""CLIPY.ID backend: FastAPI app, REST routes and the progress WebSocket."""
 from __future__ import annotations
 
 import asyncio
@@ -7,7 +7,7 @@ import shutil
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-from fastapi import APIRouter, FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -37,7 +37,7 @@ ensure_dirs()
 # Video work is CPU-bound and long-running; keep it off the event loop.
 EXECUTOR = ThreadPoolExecutor(max_workers=2, thread_name_prefix="clipper-job")
 
-app = FastAPI(title="Clipper API", version="1.0.0")
+app = FastAPI(title="CLIPY.ID API", version="0.1.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -53,7 +53,7 @@ api = APIRouter(prefix="/api")
 @app.on_event("startup")
 async def _startup() -> None:
     STORE.bind_loop(asyncio.get_running_loop())
-    log.info("Clipper siap. ffmpeg=%s", TOOLING.ffmpeg or "TIDAK DITEMUKAN")
+    log.info("CLIPY.ID v0.1 siap. ffmpeg=%s", TOOLING.ffmpeg or "TIDAK DITEMUKAN")
 
 
 @app.on_event("shutdown")
@@ -74,6 +74,7 @@ async def health() -> dict:
 
     return {
         "status": "ok",
+        "version": "0.1.0",
         "ffmpeg": bool(TOOLING.ffmpeg),
         "ffprobe": bool(TOOLING.ffprobe),
         "yt_dlp": _has("yt_dlp"),
@@ -83,6 +84,48 @@ async def health() -> dict:
         "data_dir": str(DATA_DIR),
     }
 
+
+def _check_session_origin(request: Request):
+    origin = request.headers.get('origin')
+    if origin and origin != str(request.base_url).rstrip('/') and origin not in ('http://127.0.0.1:5173', 'http://localhost:5173'):
+        raise HTTPException(403, 'Asal permintaan tidak diizinkan.')
+
+@api.get('/youtube-session')
+async def youtube_session():
+    from .pipeline.downloader import session_status
+    return session_status()
+
+@api.post('/youtube-session')
+async def connect_youtube(request: Request):
+    _check_session_origin(request)
+    from .pipeline.downloader import connect_chrome
+    try:
+        return await asyncio.to_thread(connect_chrome)
+    except RuntimeError as exc:
+        raise HTTPException(400, str(exc)) from None
+
+@api.post('/youtube-session/import')
+async def import_youtube_session(request: Request):
+    _check_session_origin(request)
+    from .pipeline.downloader import import_session
+    if request.headers.get('content-type', '').split(';')[0] != 'text/plain':
+        raise HTTPException(415, 'Gunakan file sesi teks.')
+    content = bytearray()
+    async for chunk in request.stream():
+        content.extend(chunk)
+        if len(content) > 262144:
+            raise HTTPException(413, 'Ukuran file sesi maksimal 256 KB.')
+    try:
+        return import_session(content.decode('utf-8-sig'))
+    except (RuntimeError, UnicodeError) as exc:
+        raise HTTPException(400, str(exc) if isinstance(exc, RuntimeError) else 'File harus menggunakan UTF-8.') from None
+
+@api.delete('/youtube-session')
+async def disconnect_youtube(request: Request):
+    _check_session_origin(request)
+    from .pipeline.downloader import disconnect_chrome
+    disconnect_chrome()
+    return {'connected': False}
 
 @api.get("/moment-labels")
 async def moment_labels() -> dict:
@@ -284,7 +327,7 @@ else:
     @app.get("/")
     async def dev_root() -> JSONResponse:
         return JSONResponse({
-            "message": "Clipper API berjalan. Frontend belum di-build.",
+            "message": "CLIPY.ID API berjalan. Frontend belum di-build.",
             "hint": "Jalankan `npm run build` di folder frontend, atau `npm run dev` untuk mode pengembangan.",
             "api_docs": "/docs",
         })

@@ -21,7 +21,7 @@ export function formatBytes(bytes: number): string {
 /** Score bands drive the badge colour in the clip grid. */
 export function scoreTone(score: number): string {
   if (score >= 80) return 'border-brand-400/40 bg-brand-500/15 text-brand-400'
-  if (score >= 60) return 'border-amber-400/40 bg-amber-400/15 text-amber-300'
+  if (score >= 60) return 'border-white/30 bg-white/10 text-white'
   return 'border-slate-400/30 bg-white/5 text-slate-300'
 }
 

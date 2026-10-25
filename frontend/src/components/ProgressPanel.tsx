@@ -39,10 +39,10 @@ export default function ProgressPanel({ job, onCancel, connected }: Props) {
               {job.source?.title || 'Menyiapkan video…'}
             </h2>
             {running && !connected && (
-              <span className="chip border-amber-400/30 bg-amber-400/10 text-amber-300">mode polling</span>
+              <span className="chip border-slate-400/30 bg-slate-400/10 text-slate-300">Pembaruan berkala</span>
             )}
           </div>
-          <p className="mt-0.5 truncate text-[11px] text-slate-400">
+          <p className="mt-0.5 truncate text-xs text-slate-400">
             {job.source?.uploader && <span>{job.source.uploader} · </span>}
             {job.source?.duration ? formatDuration(job.source.duration) : ''}
             {job.source?.width ? ` · ${job.source.width}×${job.source.height}` : ''}
@@ -74,7 +74,7 @@ export default function ProgressPanel({ job, onCancel, connected }: Props) {
         >
           <div
             className={`h-full rounded-full transition-[width] duration-500 ease-out ${
-              failed ? 'bg-rose-500' : cancelled ? 'bg-slate-500' : 'bg-gradient-to-r from-brand-500 to-accent-500'
+              failed ? 'bg-slate-500' : cancelled ? 'bg-slate-500' : 'bg-white'
             }`}
             style={{ width: `${Math.max(2, job.percent)}%` }}
           />
@@ -116,9 +116,9 @@ export default function ProgressPanel({ job, onCancel, connected }: Props) {
       </ol>
 
       {job.error && (
-        <div role="alert" className="mt-4 rounded-xl border border-rose-500/40 bg-rose-500/10 p-3">
-          <p className="text-xs font-semibold text-rose-300">Proses gagal</p>
-          <p className="mt-1 text-xs leading-relaxed text-rose-200/90">{job.error}</p>
+        <div role="alert" className="mt-4 rounded-xl border border-slate-500/40 bg-slate-500/10 p-3">
+          <p className="text-xs font-semibold text-slate-300">Proses gagal</p>
+          <p className="mt-1 text-xs leading-relaxed text-slate-200/90">{job.error}</p>
         </div>
       )}
 
@@ -128,14 +128,14 @@ export default function ProgressPanel({ job, onCancel, connected }: Props) {
             type="button"
             onClick={() => setShowLog((v) => !v)}
             aria-expanded={showLog}
-            className="text-[11px] font-medium text-slate-400 hover:text-slate-200"
+            className="text-xs font-medium text-slate-400 hover:text-slate-200"
           >
             {showLog ? 'Sembunyikan' : 'Tampilkan'} log aktivitas ({job.log.length})
           </button>
           {showLog && (
             <div
               ref={logRef}
-              className="scroll-slim mt-2 max-h-40 overflow-y-auto rounded-xl border border-white/10 bg-ink-950/60 p-2.5 font-mono text-[10.5px] leading-relaxed text-slate-400"
+              className="scroll-slim mt-2 max-h-40 overflow-y-auto rounded-xl border border-white/10 bg-ink-950/60 p-2.5 font-mono text-xs leading-relaxed text-slate-400"
             >
               {job.log.map((line, i) => (
                 <div key={i} className="whitespace-pre-wrap break-words">

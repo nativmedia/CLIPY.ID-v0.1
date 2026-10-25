@@ -71,13 +71,13 @@ export default function ClipCard({ clip, labels, selected, onToggle }: Props) {
           </>
         )}
 
-        <span className="pointer-events-none absolute bottom-2 right-2 rounded-md bg-black/75 px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-white">
+        <span className="pointer-events-none absolute bottom-2 right-2 rounded-md bg-black/75 px-1.5 py-0.5 text-xs font-semibold tabular-nums text-white">
           {formatDuration(clip.duration)}
         </span>
 
         <span
           className={`pointer-events-none absolute left-2 top-2 chip backdrop-blur ${scoreTone(clip.score)}`}
-          title="Skor potensi viral (0–100)"
+          title="Skor momen berbasis aturan (0–100)"
         >
           {clip.score}
         </span>
@@ -110,11 +110,11 @@ export default function ClipCard({ clip, labels, selected, onToggle }: Props) {
           ))}
         </div>
 
-        <p className="line-clamp-3 text-[11.5px] leading-relaxed text-slate-400">
+        <p className="line-clamp-3 text-xs leading-relaxed text-slate-400">
           {clip.assets?.hook || clip.transcript || 'Tanpa transkrip.'}
         </p>
 
-        <div className="flex items-center justify-between text-[10.5px] text-slate-500">
+        <div className="flex items-center justify-between text-xs text-slate-500">
           <span className="tabular-nums">
             {formatDuration(clip.start)} – {formatDuration(clip.end)}
           </span>

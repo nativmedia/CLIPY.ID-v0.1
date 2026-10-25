@@ -2,24 +2,25 @@
 export default {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
   theme: {
+    colors: { transparent: 'transparent', current: 'currentColor', black: '#000', white: '#fff', slate: {50:'#fafafa',100:'#f5f5f5',200:'#e5e5e5',300:'#d4d4d4',400:'#aaa',500:'#959595',600:'#8a8a8a',700:'#444',800:'#262626',900:'#171717',950:'#080808'} },
     extend: {
       colors: {
         ink: {
-          950: '#080b14',
-          900: '#0d1220',
-          850: '#121a2b',
-          800: '#182136',
-          700: '#243049',
-          600: '#35425f',
+          950: '#080808',
+          900: '#111111',
+          850: '#191919',
+          800: '#222222',
+          700: '#333333',
+          600: '#444444',
         },
         brand: {
-          400: '#5eead4',
-          500: '#2dd4bf',
-          600: '#14b8a6',
+          400: '#ffffff',
+          500: '#eeeeee',
+          600: '#cccccc',
         },
         accent: {
-          400: '#a78bfa',
-          500: '#8b5cf6',
+          400: '#eeeeee',
+          500: '#bbbbbb',
         },
       },
       fontFamily: {

@@ -10,6 +10,67 @@ from typing import Any, Callable
 from ..models import SourceInfo
 
 ProgressCb = Callable[[float, str], None]
+_SESSION_JAR = None
+
+def connect_chrome():
+    """Load consented YouTube cookies into memory only."""
+    global _SESSION_JAR
+    from yt_dlp import YoutubeDL
+    from yt_dlp.cookies import YoutubeDLCookieJar
+    class QuietLogger:
+        def debug(self, msg): pass
+        def warning(self, msg): pass
+        def error(self, msg): pass
+    try:
+        with YoutubeDL({'cookiesfrombrowser': ('chrome',), 'quiet': True, 'logger': QuietLogger()}) as ydl:
+            jar = YoutubeDLCookieJar()
+            for cookie in ydl.cookiejar:
+                domain = cookie.domain.lstrip('.')
+                if domain == 'youtube.com' or domain.endswith('.youtube.com'):
+                    jar.set_cookie(cookie)
+            if not len(jar):
+                raise RuntimeError('Sesi YouTube tidak ditemukan di profil Chrome utama. Buka YouTube dan masuk di profil tersebut.')
+        _SESSION_JAR = jar
+        return {'connected': True}
+    except Exception as exc:
+        text = str(exc).lower()
+        if 'copy' in text or 'permission' in text:
+            raise RuntimeError('Chrome masih mengunci sesi. Tutup semua jendela Chrome dan proses latarnya, lalu sambungkan lagi.') from None
+        if 'decrypt' in text or 'dpapi' in text:
+            raise RuntimeError('Enkripsi Chrome di Windows tidak didukung pembaca sesi ini. Koneksi belum berhasil.') from None
+        raise RuntimeError('Sesi Chrome belum dapat dibaca. Pastikan profil utama sudah masuk ke YouTube.') from None
+
+def import_session(text):
+    """Parse an explicitly supplied Netscape cookie export without writing it."""
+    global _SESSION_JAR
+    import io
+    import time
+    from http.cookiejar import MozillaCookieJar
+    from yt_dlp.cookies import YoutubeDLCookieJar
+    if not isinstance(text, str) or len(text.encode('utf-8')) > 262144:
+        raise RuntimeError('Ukuran file sesi maksimal 256 KB.')
+    parsed = MozillaCookieJar()
+    try:
+        parsed._really_load(io.StringIO(text), '<memory>', True, False)
+    except Exception:
+        raise RuntimeError('Format sesi tidak valid. Gunakan ekspor cookie Netscape untuk youtube.com.') from None
+    jar = YoutubeDLCookieJar()
+    for cookie in parsed:
+        domain = cookie.domain.lstrip('.')
+        if (domain == 'youtube.com' or domain.endswith('.youtube.com')) and (cookie.expires is None or cookie.expires > time.time()):
+            jar.set_cookie(cookie)
+    if not any(c.name in ('SID', '__Secure-1PSID', '__Secure-3PSID', 'LOGIN_INFO') for c in jar):
+        raise RuntimeError('File ini tidak berisi sesi login YouTube yang masih berlaku.')
+    _SESSION_JAR = jar
+    return {'connected': True}
+
+def disconnect_chrome():
+    global _SESSION_JAR
+    _SESSION_JAR = None
+
+def session_status():
+    return {'connected': _SESSION_JAR is not None}
+
 
 _YT_PATTERNS = (
     r"^(https?://)?(www\.)?(m\.)?youtube\.com/watch\?[^ ]*v=[\w-]{11}",
@@ -92,7 +153,7 @@ def _download_python_api(url: str, out_dir: Path, on_progress: ProgressCb | None
         "noplaylist": True,
         "quiet": True,
         "no_warnings": True,
-        "nocheckcertificate": True,
+        "nocheckcertificate": False,
         "retries": 5,
         "fragment_retries": 5,
         "overwrites": True,
@@ -100,6 +161,8 @@ def _download_python_api(url: str, out_dir: Path, on_progress: ProgressCb | None
 
     try:
         with YoutubeDL(opts) as ydl:
+            if _SESSION_JAR is not None:
+                ydl.cookiejar = _SESSION_JAR
             info = ydl.extract_info(url, download=True)
     except YtDlpDownloadError as exc:
         raise DownloadError(_friendly_ytdlp_error(str(exc))) from exc
@@ -169,6 +232,8 @@ def _download_cli(url: str, out_dir: Path, on_progress: ProgressCb | None):
 
 def _friendly_ytdlp_error(raw: str) -> str:
     low = raw.lower()
+    if "not a bot" in low:
+        return "YouTube menolak akses otomatis. Sambungkan atau impor sesi YouTube di atas kolom URL, lalu coba lagi."
     if "private video" in low:
         return "Video bersifat privat sehingga tidak dapat diunduh."
     if "video unavailable" in low or "not available" in low:

@@ -18,7 +18,7 @@ function CopyButton({ text, label = 'Salin' }: { text: string; label?: string })
           window.setTimeout(() => setDone(false), 1600)
         }
       }}
-      className="shrink-0 rounded-lg border border-white/15 px-2 py-1 text-[10.5px] font-medium text-slate-300 transition-colors hover:bg-white/5"
+      className="shrink-0 rounded-lg border border-white/15 px-2 py-1 text-xs font-medium text-slate-300 transition-colors hover:bg-white/5"
     >
       {done ? 'Tersalin ✓' : label}
     </button>
@@ -32,7 +32,7 @@ function Row({ title, value }: { title: string; value: string }) {
         <span className="label">{title}</span>
         <CopyButton text={value} />
       </div>
-      <p className="whitespace-pre-wrap rounded-xl border border-white/10 bg-ink-950/50 p-2.5 text-[11.5px] leading-relaxed text-slate-300">
+      <p className="whitespace-pre-wrap rounded-xl border border-white/10 bg-ink-950/50 p-2.5 text-xs leading-relaxed text-slate-300">
         {value}
       </p>
     </div>
@@ -64,14 +64,14 @@ function AssetBlock({ clip }: { clip: Clip }) {
           <div className="flex flex-wrap items-center gap-2">
             <span className="chip border-white/10 bg-white/5 text-slate-300">Klip {clip.index + 1}</span>
             <span className="chip border-brand-400/40 bg-brand-500/15 text-brand-400">Skor {clip.score}</span>
-            <span className="text-[11px] tabular-nums text-slate-500">
+            <span className="text-xs tabular-nums text-slate-500">
               {formatDuration(clip.start)} – {formatDuration(clip.end)} · {formatDuration(clip.duration)}
             </span>
             {video && (
               <a
                 href={video}
                 download
-                className="ml-auto rounded-lg border border-brand-400/40 bg-brand-500/10 px-2.5 py-1 text-[10.5px] font-semibold text-brand-400 hover:bg-brand-500/20"
+                className="ml-auto rounded-lg border border-brand-400/40 bg-brand-500/10 px-2.5 py-1 text-xs font-semibold text-brand-400 hover:bg-brand-500/20"
               >
                 Unduh MP4
               </a>
@@ -104,7 +104,7 @@ function AssetBlock({ clip }: { clip: Clip }) {
                 <span className="label">Keyword SEO ({a.keywords.length})</span>
                 <CopyButton text={a.keywords.join(', ')} />
               </div>
-              <p className="text-[11.5px] text-slate-400">{a.keywords.join(' · ')}</p>
+              <p className="text-xs text-slate-400">{a.keywords.join(' · ')}</p>
             </div>
           )}
 
@@ -115,12 +115,12 @@ function AssetBlock({ clip }: { clip: Clip }) {
                 {Object.entries(a.platform_tags).map(([platform, tags]) => (
                   <div key={platform} className="rounded-xl border border-white/10 bg-ink-950/40 p-2.5">
                     <div className="mb-1 flex items-center justify-between gap-2">
-                      <span className="text-[11px] font-semibold text-slate-200">
+                      <span className="text-xs font-semibold text-slate-200">
                         {PLATFORM_NAMES[platform] ?? platform}
                       </span>
                       <CopyButton text={tags.join(', ')} />
                     </div>
-                    <p className="text-[10.5px] leading-relaxed text-slate-400">{tags.join(', ')}</p>
+                    <p className="text-xs leading-relaxed text-slate-400">{tags.join(', ')}</p>
                   </div>
                 ))}
               </div>
@@ -140,7 +140,7 @@ export default function AssetsPanel({ clips }: Props) {
     <section className="animate-fade-up space-y-3">
       <div>
         <h2 className="text-sm font-bold text-white">Aset pendukung ({withAssets.length})</h2>
-        <p className="text-[11px] text-slate-400">
+        <p className="text-xs text-slate-400">
           Judul, hook, deskripsi SEO, hashtag, tag per platform, dan rekomendasi thumbnail — siap dipakai unggah manual.
         </p>
       </div>

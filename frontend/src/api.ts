@@ -20,7 +20,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       headers: { 'Content-Type': 'application/json', ...(init?.headers ?? {}) },
     })
   } catch {
-    throw new ApiError(0, 'Tidak dapat terhubung ke server klipersid. Pastikan backend berjalan.')
+    throw new ApiError(0, 'Tidak dapat terhubung ke server CLIPY.ID. Pastikan backend berjalan.')
   }
 
   if (!res.ok) {
