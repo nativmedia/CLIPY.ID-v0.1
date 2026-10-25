@@ -52,8 +52,8 @@ Buka ulang PowerShell agar PATH diperbarui. Pastikan `python --version` menunjuk
 ### 2. Unduh dan siapkan
 
 ```powershell
-git clone https://github.com/nativmedia/CLIPY.ID.git
-cd CLIPY.ID
+git clone https://github.com/nativmedia/CLIPY.ID-v0.1.git
+cd CLIPY.ID-v0.1
 python manage.py check
 python manage.py setup
 ```
@@ -85,8 +85,8 @@ Pastikan Node.js dan Python yang dipilih tersedia untuk shell Anda. Bila `node` 
 ### 2. Unduh dan siapkan
 
 ```bash
-git clone https://github.com/nativmedia/CLIPY.ID.git
-cd CLIPY.ID
+git clone https://github.com/nativmedia/CLIPY.ID-v0.1.git
+cd CLIPY.ID-v0.1
 python3.12 manage.py check
 python3.12 manage.py setup
 ```
