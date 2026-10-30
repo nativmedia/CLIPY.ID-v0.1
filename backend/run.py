@@ -16,7 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="CLIPY.ID v0.1 server")
+    parser = argparse.ArgumentParser(description="CLIPY.ID v0.2 server")
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8000)
     parser.add_argument("--reload", action="store_true", help="auto-reload saat file berubah")
@@ -42,7 +42,7 @@ def main() -> int:
             file=sys.stderr,
         )
 
-    print(f"\n  CLIPY.ID v0.1  ->  http://{args.host}:{args.port}")
+    print(f"\n  CLIPY.ID v0.2  ->  http://{args.host}:{args.port}")
     print(f"  Dokumentasi  ->  http://{args.host}:{args.port}/docs\n")
 
     uvicorn.run(

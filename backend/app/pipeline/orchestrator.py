@@ -10,7 +10,7 @@ from ..config import DOWNLOAD_DIR, MAX_SOURCE_SECONDS, job_dir
 from ..models import Clip, Job, JobStage
 from ..store import STORE
 from . import assets as assets_mod
-from . import audio_features, downloader, render, scoring, subtitles, vision
+from . import audio_features, downloader, framing, render, scoring, subtitles, vision
 from .media import extract_audio_wav, probe_media
 from .transcribe import transcribe
 
@@ -135,6 +135,11 @@ def _run(job: Job, workdir: Path, clips_dir: Path) -> None:
         video_path, duration=duration, sample_fps=2.0, on_progress=vis_progress
     )
     _check_cancel(jid)
+    shot_cuts = []
+    if opts.enable_reframe and opts.framing_mode == "stable":
+        STORE.update(jid, message="Mendeteksi pergantian shot untuk framing tetap...")
+        shot_cuts = framing.detect_shot_cuts(video_path)
+        _check_cancel(jid)
 
     STORE.update(
         jid, percent=_scaled(JobStage.ANALYZING, 85), message="Menilai kandidat momen..."
@@ -196,10 +201,14 @@ def _run(job: Job, workdir: Path, clips_dir: Path) -> None:
             style=opts.subtitle_style,
         )
 
-        keyframes = (
-            vision.build_reframe_track(scan.face_centers, start=cand.start, end=cand.end)
-            if opts.enable_reframe else []
-        )
+        if not opts.enable_reframe:
+            keyframes = []
+        elif opts.framing_mode == "stable":
+            keyframes = framing.build_stable_track(
+                scan.face_centers, start=cand.start, end=cand.end, shot_cuts=shot_cuts
+            )
+        else:
+            keyframes = vision.build_reframe_track(scan.face_centers, start=cand.start, end=cand.end)
 
         video_out = clips_dir / f"{clip_id}.mp4"
         try:
@@ -213,6 +222,7 @@ def _run(job: Job, workdir: Path, clips_dir: Path) -> None:
                 peak_time_rel=max(0.0, cand.peak_time - cand.start),
                 enable_zoom=opts.enable_zoom,
                 enable_reframe=opts.enable_reframe,
+                framing_mode=opts.framing_mode,
                 src_meta=meta,
             )
         except Exception as exc:  # noqa: BLE001 - one bad clip must not kill the job
@@ -220,11 +230,13 @@ def _run(job: Job, workdir: Path, clips_dir: Path) -> None:
             STORE.update(jid, message=f"Klip {i + 1} gagal dirender ({exc}); dilewati.")
             continue
 
-        # Thumbnail from the scored peak frame.
+        # Read the rendered clip so thumbnails preserve the selected composition.
         thumb_out = clips_dir / f"{clip_id}.jpg"
         try:
             assets_mod.render_thumbnail(
-                video_path, thumb_out, timestamp=cand.peak_time, overlay_text=""
+                video_out, thumb_out,
+                timestamp=min(max(0.0, cand.peak_time - cand.start), max(0.0, cand.duration - 0.1)),
+                overlay_text=""
             )
         except Exception as exc:  # noqa: BLE001
             log.warning("Thumbnail %s gagal: %s", clip_id, exc)
@@ -286,7 +298,6 @@ def generate_assets_for(job_id: str, clip_ids: list[str]) -> list[Clip]:
 
     workdir = job_dir(job_id)
     clips_dir = workdir / "clips"
-    source_video = _find_source(job)
 
     updated: list[Clip] = []
     for clip in job.clips:
@@ -306,12 +317,13 @@ def generate_assets_for(job_id: str, clip_ids: list[str]) -> list[Clip]:
         )
 
         # Re-render the thumbnail with the generated headline burned in.
-        if source_video and source_video.exists():
-            peak = clip.start + (clip.end - clip.start) * 0.35
+        rendered_video = clips_dir / f"{clip.id}.mp4"
+        if rendered_video.exists():
+            peak = (clip.end - clip.start) * 0.35
             branded = clips_dir / f"{clip.id}_thumb.jpg"
             try:
                 assets_mod.render_thumbnail(
-                    source_video, branded, timestamp=peak, overlay_text=built.hook or built.title
+                    rendered_video, branded, timestamp=peak, overlay_text=built.hook or built.title
                 )
                 built.thumbnail_url = f"/api/jobs/{job_id}/clips/{clip.id}_thumb.jpg"
             except Exception as exc:  # noqa: BLE001

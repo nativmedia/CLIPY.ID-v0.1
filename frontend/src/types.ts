@@ -21,6 +21,7 @@ export interface JobOptions {
   min_score: number
   moment_filter: string[]
   subtitle_style: SubtitleStyle
+  framing_mode: 'stable' | 'follow'
   enable_zoom: boolean
   enable_reframe: boolean
   language: string | null
@@ -35,7 +36,8 @@ export const DEFAULT_OPTIONS: JobOptions = {
   min_score: 45,
   moment_filter: [],
   subtitle_style: 'outline',
-  enable_zoom: true,
+  framing_mode: 'stable',
+  enable_zoom: false,
   enable_reframe: true,
   language: null,
   whisper_model: null,

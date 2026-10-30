@@ -37,7 +37,7 @@ ensure_dirs()
 # Video work is CPU-bound and long-running; keep it off the event loop.
 EXECUTOR = ThreadPoolExecutor(max_workers=2, thread_name_prefix="clipper-job")
 
-app = FastAPI(title="CLIPY.ID API", version="0.1.0")
+app = FastAPI(title="CLIPY.ID API", version="0.2.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -53,7 +53,7 @@ api = APIRouter(prefix="/api")
 @app.on_event("startup")
 async def _startup() -> None:
     STORE.bind_loop(asyncio.get_running_loop())
-    log.info("CLIPY.ID v0.1 siap. ffmpeg=%s", TOOLING.ffmpeg or "TIDAK DITEMUKAN")
+    log.info("CLIPY.ID v0.2 siap. ffmpeg=%s", TOOLING.ffmpeg or "TIDAK DITEMUKAN")
 
 
 @app.on_event("shutdown")
@@ -74,7 +74,7 @@ async def health() -> dict:
 
     return {
         "status": "ok",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "ffmpeg": bool(TOOLING.ffmpeg),
         "ffprobe": bool(TOOLING.ffprobe),
         "yt_dlp": _has("yt_dlp"),

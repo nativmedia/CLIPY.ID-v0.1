@@ -217,20 +217,32 @@ export default function OptionsPanel({ options, onChange, labels, disabled }: Pr
             </div>
           </div>
 
+          <div>
+            <label htmlFor="opt-framing" className="label mb-2">Gerakan framing</label>
+            <select id="opt-framing" className="field" value={options.framing_mode} disabled={disabled}
+              onChange={(e) => onChange({ ...options, framing_mode: e.target.value as JobOptions['framing_mode'], enable_zoom: false })}>
+              <option value="stable">Framing tetap (disarankan)</option>
+              <option value="follow">Mengikuti wajah</option>
+            </select>
+            <p className="mt-2 text-xs leading-relaxed text-slate-400">{options.framing_mode === 'stable'
+              ? 'Crop terkunci dalam setiap shot kamera. Posisi berpindah langsung saat kamera sumber berganti; tanpa pan atau zoom otomatis.'
+              : 'Posisi crop bergerak halus mengikuti deteksi wajah. Zoom tambahan dapat diaktifkan di bawah.'}</p>
+          </div>
+
           <div className="grid gap-2 sm:grid-cols-2">
             <Toggle
               checked={options.enable_reframe}
               onChange={(v) => set('enable_reframe', v)}
-              title="Auto-reframe"
-              hint="Crop 9:16 mengikuti wajah pembicara"
+              title="Framing wajah"
+              hint="Tempatkan wajah utama dalam crop 9:16. Matikan untuk crop tengah."
               disabled={disabled}
             />
             <Toggle
-              checked={options.enable_zoom}
+              checked={options.framing_mode === 'follow' && options.enable_zoom}
               onChange={(v) => set('enable_zoom', v)}
               title="Auto-zoom"
-              hint="Zoom halus pada momen paling kuat"
-              disabled={disabled}
+              hint={options.framing_mode === 'stable' ? 'Tidak digunakan pada framing tetap' : 'Zoom halus pada momen paling kuat'}
+              disabled={disabled || options.framing_mode === 'stable'}
             />
           </div>
 

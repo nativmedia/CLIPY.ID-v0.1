@@ -1,3 +1,19 @@
+# CLIPY.ID v0.2 — verification
+
+Local verification on Windows, 30 October 2026:
+
+- Frontend TypeScript validation and production build passed.
+- All 19 backend tests passed locally, including real FFmpeg rendering and scene detection.
+- A stationary gradient source verified that stable framing does not pan or zoom, even when enable_zoom is supplied. A cut changes the held crop immediately. Output remained 720 × 1280 with audio and expected duration.
+- The preview thumbnail matched a decoded rendered frame. Publication assets also worked when no source video was retained.
+- Unit checks covered jitter, missed detections, dominant-face selection, no-face shots, clip-relative camera cuts, merged duplicate crops, and partial-clip consistency.
+- Browser verification confirmed the stable default, disabled zoom in stable mode, and enabled zoom control in follow mode.
+- GitHub Actions installs FFmpeg on Linux to run render checks; Windows/macOS run API and planning checks plus renders when FFmpeg is available.
+
+Scope: the framing technique is adapted from CLIPY.ID 2's held-crop design. This release uses the existing Haar face detector, without mouth/audio active-speaker recognition, multi-panel layouts, or new model downloads. Full YouTube transcription was not re-run for this change. Existing rendered videos must be regenerated to use v0.2 framing.
+
+---
+
 # CLIPY.ID v0.1 — verification
 
 Local verification on Windows, 25 October 2026:

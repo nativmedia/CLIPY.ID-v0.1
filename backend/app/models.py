@@ -64,7 +64,8 @@ class JobOptions(BaseModel):
     min_score: int = Field(45, ge=0, le=100)
     moment_filter: list[str] = Field(default_factory=list)
     subtitle_style: Literal["outline", "shadow", "box"] = "outline"
-    enable_zoom: bool = True
+    framing_mode: Literal["stable", "follow"] = "stable"
+    enable_zoom: bool = False
     enable_reframe: bool = True
     language: str | None = None  # None => autodetect
     whisper_model: str | None = None

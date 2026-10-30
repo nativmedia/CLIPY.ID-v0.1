@@ -31,7 +31,7 @@ def check() -> bool:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description='CLIPY.ID v0.1 - local video clipping studio')
+    parser = argparse.ArgumentParser(description='CLIPY.ID v0.2 - local video clipping studio')
     parser.add_argument('command', choices=('setup', 'run', 'check'))
     parser.add_argument('--port', type=int, default=8000)
     args = parser.parse_args()

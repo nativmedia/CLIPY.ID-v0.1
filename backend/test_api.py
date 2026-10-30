@@ -13,7 +13,7 @@ class ApiTests(unittest.TestCase):
     def test_version_and_tooling_contract(self):
         response = self.client.get('/api/health')
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()['version'], '0.1.0')
+        self.assertEqual(response.json()['version'], '0.2.0')
         self.assertIsInstance(response.json()['ffmpeg'], bool)
 
     def test_invalid_source_and_duration_do_not_start_jobs(self):

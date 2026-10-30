@@ -1,7 +1,7 @@
 """Render a scored moment into a ready-to-upload 9:16 short.
 
 Filter chain per clip:
-  trim -> dynamic 9:16 crop (face-tracked) -> scale 720x1280 -> optional zoom -> burn ASS subs
+  trim -> held or following 9:16 crop -> scale 720x1280 -> optional zoom -> burn ASS subs
 When no face is found we centre-crop; if the source is narrower than 9:16 we pad with a
 blurred copy of the frame instead of black bars.
 """
@@ -24,7 +24,7 @@ log = logging.getLogger("clipper.render")
 TARGET_AR = OUT_WIDTH / OUT_HEIGHT  # 0.5625
 
 
-def _expr_from_keyframes(keyframes: list[tuple[float, float]], crop_w: int, src_w: int) -> str:
+def _expr_from_keyframes(keyframes: list[tuple[float, float]], crop_w: int, src_w: int, *, stable: bool = False) -> str:
     """Piecewise-linear ffmpeg expression for crop x over time.
 
     Built as nested if(lt(t,..)) so the crop glides between face positions.
@@ -47,13 +47,14 @@ def _expr_from_keyframes(keyframes: list[tuple[float, float]], crop_w: int, src_
         t1, x1 = pts[i + 1]
         span = max(1e-3, t1 - t0)
         slope = (x1 - x0) / span
-        lerp = f"({x0:.1f}+({slope:.4f})*(t-{t0:.3f}))"
+        lerp = f"{x0:.1f}" if stable else f"({x0:.1f}+({slope:.4f})*(t-{t0:.3f}))"
         expr = f"if(lt(t,{t1:.3f}),{lerp},{expr})"
     return expr
 
 
 def _crop_filter(
-    src_w: int, src_h: int, keyframes: list[tuple[float, float]], enable_reframe: bool
+    src_w: int, src_h: int, keyframes: list[tuple[float, float]], enable_reframe: bool,
+    *, stable: bool = False,
 ) -> tuple[str, bool]:
     """Return (filter_chain, needs_blur_pad)."""
     src_ar = src_w / max(1, src_h)
@@ -71,7 +72,7 @@ def _crop_filter(
     crop_w = min(crop_w, src_w)
 
     if enable_reframe and keyframes:
-        x_expr = _expr_from_keyframes(keyframes, crop_w, src_w)
+        x_expr = _expr_from_keyframes(keyframes, crop_w, src_w, stable=stable)
     else:
         x_expr = f"{max(0, (src_w - crop_w) // 2)}"
 
@@ -141,8 +142,9 @@ def render_clip(
     ass_path: Path | None,
     keyframes: list[tuple[float, float]],
     peak_time_rel: float,
-    enable_zoom: bool = True,
+    enable_zoom: bool = False,
     enable_reframe: bool = True,
+    framing_mode: str = "stable",
     src_meta: dict | None = None,
 ) -> Path:
     """Encode one clip. Raises FFmpegError on failure."""
@@ -156,12 +158,15 @@ def render_clip(
     fps = float(meta.get("fps") or 30.0)
     out_fps = max(24.0, min(60.0, fps if fps > 0 else 30.0))
 
-    crop_chain, needs_pad = _crop_filter(src_w, src_h, keyframes, enable_reframe)
+    if framing_mode not in ("stable", "follow"):
+        raise ValueError("Unknown framing mode")
+    stable = framing_mode == "stable"
+    crop_chain, needs_pad = _crop_filter(src_w, src_h, keyframes, enable_reframe, stable=stable)
 
     parts = [crop_chain]
     if needs_pad:
         parts.append(_blur_pad_chain())
-    if enable_zoom:
+    if enable_zoom and not stable:
         parts.append(_zoom_filter(duration, peak_time_rel, out_fps))
     parts.append("setsar=1")
     if ass_path is not None and ass_path.exists():

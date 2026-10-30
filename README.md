@@ -1,17 +1,25 @@
-# CLIPY.ID v0.1
+# CLIPY.ID v0.2
 
 **Studio klip video lokal untuk kreator.** Ubah video YouTube panjang menjadi potongan vertikal 9:16 dengan subtitle, pratinjau, dan aset publikasi. Dibangun dengan React, TypeScript, FastAPI, Whisper, OpenCV, FFmpeg, dan yt-dlp.
 
-CLIPY.ID sebelumnya bernama **klipersid**. Versi 0.1 merupakan rilis awal untuk dijalankan sendiri di komputer Windows atau macOS, dengan tampilan hitam-putih yang responsif. Tidak memerlukan akun CLIPY.ID, langganan, atau API key.
+CLIPY.ID sebelumnya bernama **klipersid**. Versi 0.2 merupakan rilis awal untuk dijalankan sendiri di komputer Windows atau macOS, dengan tampilan hitam-putih yang responsif. Tidak memerlukan akun CLIPY.ID, langganan, atau API key.
 
-![Tampilan studio CLIPY.ID v0.1](docs/studio.png)
+![Tampilan studio CLIPY.ID v0.2](docs/studio.png)
+
+## Baru di v0.2: framing tetap
+
+Mode **Framing tetap** menjadi default. Tekniknya mengadaptasi pendekatan held-crop pada CLIPY.ID 2: deteksi pergantian shot dengan FFmpeg, tentukan satu posisi wajah utama yang konsisten untuk tiap shot, lalu kunci crop. Video dan audio tetap berjalan. Posisi hanya berganti langsung ketika shot kamera berubah; zoom otomatis tidak dipakai pada mode ini.
+
+Buka **Pengaturan klip → Gerakan framing** untuk memilih **Mengikuti wajah** bila Anda ingin crop bergerak seperti versi sebelumnya. Zoom tambahan tersedia pada mode itu. Matikan **Framing wajah** untuk crop tengah. Thumbnail kini diambil dari hasil render agar framing-nya sesuai klip, termasuk ketika sumber tidak disimpan.
+
+Deteksi wajah memakai Haar Cascade lokal yang sudah tersedia. Rilis ini tidak mengadopsi deteksi pembicara berbasis gerakan mulut, layout multi-panel, atau model YuNet/MediaPipe dari proyek referensi. Wajah yang dipilih adalah posisi deteksi paling konsisten dalam shot, sehingga perlu ditinjau pada percakapan dengan banyak orang. Perubahan berlaku untuk klip yang dibuat ulang.
 
 ## Apa yang bisa dilakukan?
 
 - Mengunduh satu video YouTube dari tautan watch, youtu.be, Shorts, embed, atau live.
 - Membuat transkrip lokal menggunakan faster-whisper dengan waktu per kata.
 - Menilai kandidat momen dari teks, fitur audio, dan wajah, lalu memilih potongan yang tidak tumpang tindih.
-- Menghasilkan MP4 vertikal **720 × 1280**, auto-reframe berbasis wajah, serta zoom opsional.
+- Menghasilkan MP4 vertikal **720 × 1280**, framing tetap per shot kamera, mode mengikuti wajah, serta zoom opsional pada mode mengikuti wajah.
 - Menanamkan subtitle dengan gaya outline, shadow, atau box; file subtitle ASS juga tersedia.
 - Menampilkan progres, pembatalan proses, dan pratinjau klip.
 - Menyiapkan judul, hook, deskripsi, hashtag, kata kunci, serta thumbnail setelah klip dipilih.
@@ -32,7 +40,7 @@ CLIPY.ID sebelumnya bernama **klipersid**. Versi 0.1 merupakan rilis awal untuk 
 
 GPU tidak wajib. Windows dapat memakai NVIDIA CUDA bila runtime CUDA/cuBLAS yang sesuai tersedia; aplikasi mencoba kembali ke CPU bila tidak tersedia. macOS berjalan melalui CPU; akselerasi Apple Metal tidak disediakan oleh backend CTranslate2 ini. Gunakan model tiny/base terlebih dahulu; model lebih besar memerlukan lebih banyak RAM dan waktu.
 
-> Repo yang masih private hanya dapat diunduh akun yang diberi akses. Autentikasi GitHub diperlukan untuk clone. Nama CLIPY.ID merupakan identitas proyek, bukan layanan web yang di-host.
+> Repository ini public dan dapat diunduh tanpa undangan. Nama CLIPY.ID merupakan identitas proyek, bukan layanan web yang di-host.
 
 ## Instalasi di Windows
 
@@ -100,6 +108,18 @@ python3.12 manage.py run
 Buka **http://127.0.0.1:8000** dan biarkan Terminal berjalan. Tekan **Ctrl+C** untuk berhenti. Jika `python3` di komputer Anda sudah menggunakan versi 3.10–3.13, Anda juga dapat menggunakan `python3 manage.py run` atau menjalankan **Jalankan-CLIPY.command**.
 
 Panduan macOS disediakan untuk instalasi dari source; pengujian lokal rilis ini dilakukan di Windows. Workflow GitHub Actions menyertakan pemeriksaan backend Windows, macOS, dan Linux; itu tidak menggantikan pengujian video penuh di setiap perangkat.
+
+## Memperbarui dari v0.1
+
+Hentikan server, lalu dari folder repository jalankan:
+
+```bash
+git pull
+python manage.py setup
+python manage.py run
+```
+
+Di macOS gunakan `python3.12`. Nama repo tetap `CLIPY.ID-v0.1` agar tautan clone sebelumnya terus berfungsi; versi aplikasi dan rilis terbaru adalah **v0.2**. Data lokal tidak dihapus oleh setup. Klip lama tetap memakai framing lama dan perlu diproses ulang untuk mendapatkan framing tetap.
 
 ## Cara menggunakan
 
@@ -184,7 +204,7 @@ cd backend
 
 macOS: gunakan `.venv/bin/python` sebagai pengganti `.venv\Scripts\python.exe`. API tersedia di `/docs`. Pengujian API tidak mengunduh video/model atau mempublikasikan konten.
 
-## Batas versi 0.1
+## Batas versi 0.2
 
 - Input utama berupa tautan YouTube; unggah file lokal dan editor timeline belum tersedia.
 - Hanya keluaran vertikal 720 × 1280; belum ada ekspor 1080p atau rasio lain.
