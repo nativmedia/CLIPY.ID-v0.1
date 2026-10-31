@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { mediaUrl } from '../api'
 import { copyText, formatDuration } from '../lib/format'
-import { PLATFORM_NAMES, type Clip } from '../types'
+import { PLATFORM_NAMES, type AspectRatio, type Clip } from '../types'
 
 interface Props {
   clips: Clip[]
+  aspectRatio: AspectRatio
 }
 
 function CopyButton({ text, label = 'Salin' }: { text: string; label?: string }) {
@@ -39,7 +40,7 @@ function Row({ title, value }: { title: string; value: string }) {
   )
 }
 
-function AssetBlock({ clip }: { clip: Clip }) {
+function AssetBlock({ clip, aspectRatio }: { clip: Clip; aspectRatio: AspectRatio }) {
   const a = clip.assets
   if (!a) return null
   const thumb = mediaUrl(a.thumbnail_url ?? clip.thumbnail_url)
@@ -54,7 +55,7 @@ function AssetBlock({ clip }: { clip: Clip }) {
               src={thumb}
               alt={`Thumbnail rekomendasi klip ${clip.index + 1}`}
               loading="lazy"
-              className="aspect-[9/16] w-full rounded-xl border border-white/10 object-cover"
+              className="w-full rounded-xl border border-white/10 object-cover" style={{ aspectRatio: aspectRatio.replace(':', ' / ') }}
             />
             <p className="mt-1.5 text-center text-[10px] text-slate-500">Rekomendasi thumbnail</p>
           </div>
@@ -132,7 +133,7 @@ function AssetBlock({ clip }: { clip: Clip }) {
   )
 }
 
-export default function AssetsPanel({ clips }: Props) {
+export default function AssetsPanel({ clips, aspectRatio }: Props) {
   const withAssets = clips.filter((c) => c.assets)
   if (withAssets.length === 0) return null
 
@@ -146,7 +147,7 @@ export default function AssetsPanel({ clips }: Props) {
       </div>
       <div className="space-y-3">
         {withAssets.map((c) => (
-          <AssetBlock key={c.id} clip={c} />
+          <AssetBlock key={c.id} clip={c} aspectRatio={aspectRatio} />
         ))}
       </div>
     </section>

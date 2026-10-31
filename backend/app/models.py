@@ -58,6 +58,7 @@ MOMENT_LABELS_ID: dict[str, str] = {
 
 
 class JobOptions(BaseModel):
+    aspect_ratio: Literal["9:16", "4:5", "1:1", "16:9", "4:3"] = "9:16"
     max_clip_seconds: int = Field(60, ge=10, le=180)
     min_clip_seconds: int = Field(12, ge=5, le=120)
     max_clips: int = Field(6, ge=1, le=15)

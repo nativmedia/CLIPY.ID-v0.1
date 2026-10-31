@@ -106,15 +106,22 @@ def build_ass(
     out_path: str | Path,
     style: str = "outline",
     highlight_words: bool = True,
+    width: int = PLAY_W,
+    height: int = PLAY_H,
 ) -> Path:
     """Write an ASS subtitle file covering [clip_start, clip_end], time-shifted to 0."""
     out_path = Path(out_path)
     style_line = _STYLES.get(style, _STYLES["outline"])
+    fields = style_line.split(",")
+    factor = min(width / PLAY_W, height / PLAY_H)
+    for index in (2, 16, 17, 19, 20, 21):
+        fields[index] = str(max(0, round(int(fields[index]) * factor)))
+    style_line = ",".join(fields)
 
     header = f"""[Script Info]
 ScriptType: v4.00+
-PlayResX: {PLAY_W}
-PlayResY: {PLAY_H}
+PlayResX: {width}
+PlayResY: {height}
 WrapStyle: 2
 ScaledBorderAndShadow: yes
 YCbCr Matrix: TV.709

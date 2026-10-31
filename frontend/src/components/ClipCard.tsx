@@ -1,16 +1,17 @@
 import { useRef, useState } from 'react'
 import { mediaUrl } from '../api'
 import { formatDuration, scoreTone } from '../lib/format'
-import type { Clip, MomentLabel } from '../types'
+import type { AspectRatio, Clip, MomentLabel } from '../types'
 
 interface Props {
   clip: Clip
+  aspectRatio: AspectRatio
   labels: MomentLabel[]
   selected: boolean
   onToggle: (id: string) => void
 }
 
-export default function ClipCard({ clip, labels, selected, onToggle }: Props) {
+export default function ClipCard({ clip, aspectRatio, labels, selected, onToggle }: Props) {
   const [playing, setPlaying] = useState(false)
   const videoRef = useRef<HTMLVideoElement | null>(null)
 
@@ -25,7 +26,7 @@ export default function ClipCard({ clip, labels, selected, onToggle }: Props) {
         selected ? 'border-brand-400/60 ring-1 ring-brand-400/40' : 'hover:border-white/20'
       }`}
     >
-      <div className="relative aspect-[9/16] bg-ink-950">
+      <div className="relative bg-ink-950" style={{ aspectRatio: aspectRatio.replace(':', ' / ') }}>
         {playing && video ? (
           <video
             ref={videoRef}

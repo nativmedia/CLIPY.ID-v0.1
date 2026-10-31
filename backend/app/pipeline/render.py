@@ -22,6 +22,7 @@ from .media import ffmpeg, probe_media
 log = logging.getLogger("clipper.render")
 
 TARGET_AR = OUT_WIDTH / OUT_HEIGHT  # 0.5625
+OUTPUT_SIZES = {"9:16": (720, 1280), "4:5": (720, 900), "1:1": (720, 720), "16:9": (1280, 720), "4:3": (960, 720)}
 
 
 def _expr_from_keyframes(keyframes: list[tuple[float, float]], crop_w: int, src_w: int, *, stable: bool = False) -> str:
@@ -54,20 +55,21 @@ def _expr_from_keyframes(keyframes: list[tuple[float, float]], crop_w: int, src_
 
 def _crop_filter(
     src_w: int, src_h: int, keyframes: list[tuple[float, float]], enable_reframe: bool,
-    *, stable: bool = False,
+    *, stable: bool = False, width: int = OUT_WIDTH, height: int = OUT_HEIGHT,
 ) -> tuple[str, bool]:
     """Return (filter_chain, needs_blur_pad)."""
     src_ar = src_w / max(1, src_h)
 
-    if src_ar <= TARGET_AR + 1e-3:
+    target_ar = width / height
+    if src_ar <= target_ar + 1e-3:
         # Already portrait-ish (or narrower): scale to width and pad vertically.
         return (
-            f"scale={OUT_WIDTH}:-2:flags=lanczos",
+            f"scale={width}:-2:flags=lanczos",
             True,
         )
 
     # Landscape source: crop a 9:16 column out of it.
-    crop_w = max(2, int(round(src_h * TARGET_AR)))
+    crop_w = max(2, int(round(src_h * target_ar)))
     crop_w -= crop_w % 2
     crop_w = min(crop_w, src_w)
 
@@ -78,23 +80,23 @@ def _crop_filter(
 
     chain = (
         f"crop=w={crop_w}:h={src_h}:x='{x_expr}':y=0,"
-        f"scale={OUT_WIDTH}:{OUT_HEIGHT}:flags=lanczos"
+        f"scale={width}:{height}:flags=lanczos"
     )
     return chain, False
 
 
-def _blur_pad_chain() -> str:
+def _blur_pad_chain(width: int = OUT_WIDTH, height: int = OUT_HEIGHT) -> str:
     """Blurred-background pad so portrait/square sources fill 720x1280 without black bars."""
     return (
         f"split=2[bg][fg];"
-        f"[bg]scale={OUT_WIDTH}:{OUT_HEIGHT}:force_original_aspect_ratio=increase,"
-        f"crop={OUT_WIDTH}:{OUT_HEIGHT},gblur=sigma=28[bgb];"
-        f"[fg]scale={OUT_WIDTH}:{OUT_HEIGHT}:force_original_aspect_ratio=decrease[fgs];"
+        f"[bg]scale={width}:{height}:force_original_aspect_ratio=increase,"
+        f"crop={width}:{height},gblur=sigma=28[bgb];"
+        f"[fg]scale={width}:{height}:force_original_aspect_ratio=decrease[fgs];"
         f"[bgb][fgs]overlay=(W-w)/2:(H-h)/2"
     )
 
 
-def _zoom_filter(duration: float, peak_rel: float, fps: float, *, strength: float = 0.10) -> str:
+def _zoom_filter(duration: float, peak_rel: float, fps: float, *, strength: float = 0.10, width: int = OUT_WIDTH, height: int = OUT_HEIGHT) -> str:
     """Slow push-in centred on the scored peak, easing in and back out.
 
     zoompan does not expose `t`, so time is derived from the output frame
@@ -112,7 +114,7 @@ def _zoom_filter(duration: float, peak_rel: float, fps: float, *, strength: floa
     return (
         f"zoompan=z='{z}':"
         f"x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':"
-        f"d=1:s={OUT_WIDTH}x{OUT_HEIGHT}:fps={f:.3f}"
+        f"d=1:s={width}x{height}:fps={f:.3f}"
     )
 
 
@@ -145,6 +147,7 @@ def render_clip(
     enable_zoom: bool = False,
     enable_reframe: bool = True,
     framing_mode: str = "stable",
+    aspect_ratio: str = "9:16",
     src_meta: dict | None = None,
 ) -> Path:
     """Encode one clip. Raises FFmpegError on failure."""
@@ -160,14 +163,17 @@ def render_clip(
 
     if framing_mode not in ("stable", "follow"):
         raise ValueError("Unknown framing mode")
+    if aspect_ratio not in OUTPUT_SIZES:
+        raise ValueError("Unknown aspect ratio")
+    width, height = OUTPUT_SIZES[aspect_ratio]
     stable = framing_mode == "stable"
-    crop_chain, needs_pad = _crop_filter(src_w, src_h, keyframes, enable_reframe, stable=stable)
+    crop_chain, needs_pad = _crop_filter(src_w, src_h, keyframes, enable_reframe, stable=stable, width=width, height=height)
 
     parts = [crop_chain]
     if needs_pad:
-        parts.append(_blur_pad_chain())
+        parts.append(_blur_pad_chain(width, height))
     if enable_zoom and not stable:
-        parts.append(_zoom_filter(duration, peak_time_rel, out_fps))
+        parts.append(_zoom_filter(duration, peak_time_rel, out_fps, width=width, height=height))
     parts.append("setsar=1")
     if ass_path is not None and ass_path.exists():
         parts.append(f"ass='{_ass_filter_arg(ass_path, dst.parent)}'")

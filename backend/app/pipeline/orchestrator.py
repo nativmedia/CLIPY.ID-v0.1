@@ -193,12 +193,14 @@ def _run(job: Job, workdir: Path, clips_dir: Path) -> None:
         text = subtitles.clip_text(segments, cand.start, cand.end)
 
         ass_path = clips_dir / f"{clip_id}.ass"
+        width, height = render.OUTPUT_SIZES[opts.aspect_ratio]
         subtitles.build_ass(
             segments,
             clip_start=cand.start,
             clip_end=cand.end,
             out_path=ass_path,
             style=opts.subtitle_style,
+            width=width, height=height,
         )
 
         if not opts.enable_reframe:
@@ -223,6 +225,7 @@ def _run(job: Job, workdir: Path, clips_dir: Path) -> None:
                 enable_zoom=opts.enable_zoom,
                 enable_reframe=opts.enable_reframe,
                 framing_mode=opts.framing_mode,
+                aspect_ratio=opts.aspect_ratio,
                 src_meta=meta,
             )
         except Exception as exc:  # noqa: BLE001 - one bad clip must not kill the job

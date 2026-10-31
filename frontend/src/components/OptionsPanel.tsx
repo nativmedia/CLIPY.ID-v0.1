@@ -135,7 +135,7 @@ export default function OptionsPanel({ options, onChange, labels, disabled }: Pr
         <span className="flex-1">
           <span className="block text-sm font-semibold text-slate-100">Pengaturan klip</span>
           <span className="text-xs text-slate-400">
-            {options.max_clips} klip · {options.min_clip_seconds}–{options.max_clip_seconds}s · skor min{' '}
+            {options.aspect_ratio} · {options.max_clips} klip · {options.min_clip_seconds}–{options.max_clip_seconds}s · skor min{' '}
             {options.min_score} · subtitle {options.subtitle_style}
           </span>
         </span>
@@ -152,6 +152,17 @@ export default function OptionsPanel({ options, onChange, labels, disabled }: Pr
 
       {open && (
         <div className="animate-fade-up space-y-5 border-t border-white/10 px-4 py-5 sm:px-5">
+          <div>
+            <label htmlFor="opt-ratio" className="label mb-2">Rasio video</label>
+            <select id="opt-ratio" className="field" value={options.aspect_ratio} disabled={disabled} onChange={(e) => set('aspect_ratio', e.target.value as JobOptions['aspect_ratio'])}>
+              <option value="9:16">9:16 — vertikal, Shorts dan Reels</option>
+              <option value="4:5">4:5 — portrait, unggahan feed</option>
+              <option value="1:1">1:1 — persegi, unggahan feed</option>
+              <option value="16:9">16:9 — landscape, YouTube</option>
+              <option value="4:3">4:3 — landscape, klasik</option>
+            </select>
+            <p className="mt-2 text-xs leading-relaxed text-slate-400">Jika bentuk sumber lebih sempit dari rasio pilihan, ruang kosong diisi dengan latar buram.</p>
+          </div>
           <div className="grid gap-5 sm:grid-cols-2">
             <Slider
               id="opt-max-clips"
@@ -234,7 +245,7 @@ export default function OptionsPanel({ options, onChange, labels, disabled }: Pr
               checked={options.enable_reframe}
               onChange={(v) => set('enable_reframe', v)}
               title="Framing wajah"
-              hint="Tempatkan wajah utama dalam crop 9:16. Matikan untuk crop tengah."
+              hint="Tempatkan wajah utama dalam crop. Matikan untuk crop tengah."
               disabled={disabled}
             />
             <Toggle

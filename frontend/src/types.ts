@@ -13,8 +13,11 @@ export type JobStage =
 export const ACTIVE_STAGES: JobStage[] = ['queued', 'downloading', 'transcribing', 'analyzing', 'rendering']
 
 export type SubtitleStyle = 'outline' | 'shadow' | 'box'
+export type AspectRatio = '9:16' | '4:5' | '1:1' | '16:9' | '4:3'
+export const ASPECT_SIZES: Record<AspectRatio, string> = { '9:16': '720 × 1280', '4:5': '720 × 900', '1:1': '720 × 720', '16:9': '1280 × 720', '4:3': '960 × 720' }
 
 export interface JobOptions {
+  aspect_ratio: AspectRatio
   max_clip_seconds: number
   min_clip_seconds: number
   max_clips: number
@@ -30,6 +33,7 @@ export interface JobOptions {
 }
 
 export const DEFAULT_OPTIONS: JobOptions = {
+  aspect_ratio: '9:16',
   max_clip_seconds: 60,
   min_clip_seconds: 12,
   max_clips: 6,

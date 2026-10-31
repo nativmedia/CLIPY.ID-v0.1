@@ -10,7 +10,7 @@ import ProgressPanel from './components/ProgressPanel'
 import UrlForm from './components/UrlForm'
 import { useJobSocket } from './hooks/useJobSocket'
 import type { Health, JobOptions, MomentLabel } from './types'
-import { ACTIVE_STAGES, DEFAULT_OPTIONS } from './types'
+import { ACTIVE_STAGES, ASPECT_SIZES, DEFAULT_OPTIONS } from './types'
 
 export default function App() {
   const [page, setPage] = useState<'studio' | 'guide'>(location.hash === '#guide' ? 'guide' : 'studio')
@@ -178,8 +178,8 @@ export default function App() {
           </div>
           <aside className="card output-panel" aria-label="Spesifikasi hasil">
             <h2>Disiapkan untuk layar vertikal</h2>
-            <div className="portrait-preview" aria-label="Ilustrasi format vertikal 9 banding 16"><div className="frame-corners"><svg width="43" height="48" viewBox="0 0 43 48" fill="none" stroke="currentColor"><path d="M1 12V1h11M31 1h11v11M42 36v11H31M12 47H1V36"/><circle cx="21.5" cy="20" r="7"/><path d="M9 38c0-12 25-12 25 0"/></svg></div><div className="preview-caption">Setiap cerita punya<br/><span>momennya.</span></div></div>
-            <dl className="spec-list"><div><dt>Rasio</dt><dd>9:16 vertikal</dd></div><div><dt>Resolusi</dt><dd>720 × 1280</dd></div><div><dt>Durasi</dt><dd>{options.min_clip_seconds}–{options.max_clip_seconds} detik</dd></div><div><dt>Jumlah</dt><dd>Hingga {options.max_clips} klip</dd></div><div><dt>Subtitle</dt><dd>{options.subtitle_style}</dd></div><div><dt>Framing</dt><dd>{options.framing_mode === 'stable' ? 'Tetap per shot' : 'Mengikuti wajah'}</dd></div><div><dt>Format</dt><dd>MP4 + subtitle ASS</dd></div></dl>
+            <div className="portrait-preview" style={{ aspectRatio: options.aspect_ratio.replace(':', ' / ') }} aria-label={`Ilustrasi rasio ${options.aspect_ratio}`}><div className="frame-corners"><svg width="43" height="48" viewBox="0 0 43 48" fill="none" stroke="currentColor"><path d="M1 12V1h11M31 1h11v11M42 36v11H31M12 47H1V36"/><circle cx="21.5" cy="20" r="7"/><path d="M9 38c0-12 25-12 25 0"/></svg></div><div className="preview-caption">Setiap cerita punya<br/><span>momennya.</span></div></div>
+            <dl className="spec-list"><div><dt>Rasio</dt><dd>{options.aspect_ratio}</dd></div><div><dt>Resolusi</dt><dd>{ASPECT_SIZES[options.aspect_ratio]}</dd></div><div><dt>Durasi</dt><dd>{options.min_clip_seconds}–{options.max_clip_seconds} detik</dd></div><div><dt>Jumlah</dt><dd>Hingga {options.max_clips} klip</dd></div><div><dt>Subtitle</dt><dd>{options.subtitle_style}</dd></div><div><dt>Framing</dt><dd>{options.framing_mode === 'stable' ? 'Tetap per shot' : 'Mengikuti wajah'}</dd></div><div><dt>Format</dt><dd>MP4 + subtitle ASS</dd></div></dl>
             <div className="output-platforms"><span>Shorts</span><span>Reels</span><span>TikTok</span></div><p className="format-note">Tinjau subtitle dan potongan sebelum membagikan. Hasil mengikuti isi dan kualitas video sumber.</p>
           </aside>
         </div>
@@ -204,6 +204,7 @@ export default function App() {
             {job.stage === 'done' && clips.length > 0 && (
               <ClipGrid
                 clips={clips}
+                aspectRatio={job.options.aspect_ratio ?? '9:16'}
                 labels={labels}
                 selected={selected}
                 onToggle={toggle}
@@ -223,7 +224,7 @@ export default function App() {
 
             {assetClips.length > 0 && (
               <div id="assets" className="scroll-mt-20">
-                <AssetsPanel clips={assetClips} />
+                <AssetsPanel clips={assetClips} aspectRatio={job.options.aspect_ratio ?? '9:16'} />
               </div>
             )}
 

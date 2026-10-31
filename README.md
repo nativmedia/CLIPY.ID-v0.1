@@ -1,6 +1,6 @@
 # CLIPY.ID v0.2
 
-**Studio klip video lokal untuk kreator.** Ubah video YouTube panjang menjadi potongan vertikal 9:16 dengan subtitle, pratinjau, dan aset publikasi. Dibangun dengan React, TypeScript, FastAPI, Whisper, OpenCV, FFmpeg, dan yt-dlp.
+**Studio klip video lokal untuk kreator.** Ubah video YouTube panjang menjadi klip vertikal, persegi, atau landscape dengan subtitle, pratinjau, dan aset publikasi. Dibangun dengan React, TypeScript, FastAPI, Whisper, OpenCV, FFmpeg, dan yt-dlp.
 
 CLIPY.ID sebelumnya bernama **klipersid**. Versi 0.2 merupakan rilis awal untuk dijalankan sendiri di komputer Windows atau macOS, dengan tampilan hitam-putih yang responsif. Tidak memerlukan akun CLIPY.ID, langganan, atau API key.
 
@@ -19,7 +19,7 @@ Deteksi wajah memakai Haar Cascade lokal yang sudah tersedia. Rilis ini tidak me
 - Mengunduh satu video YouTube dari tautan watch, youtu.be, Shorts, embed, atau live.
 - Membuat transkrip lokal menggunakan faster-whisper dengan waktu per kata.
 - Menilai kandidat momen dari teks, fitur audio, dan wajah, lalu memilih potongan yang tidak tumpang tindih.
-- Menghasilkan MP4 vertikal **720 × 1280**, framing tetap per shot kamera, mode mengikuti wajah, serta zoom opsional pada mode mengikuti wajah.
+- Menghasilkan MP4 dalam rasio **9:16, 4:5, 1:1, 16:9, atau 4:3**, dengan framing tetap per shot kamera, mode mengikuti wajah, serta zoom opsional pada mode mengikuti wajah. Atur rasio di **Pengaturan klip → Rasio video** sebelum memproses video.
 - Menanamkan subtitle dengan gaya outline, shadow, atau box; file subtitle ASS juga tersedia.
 - Menampilkan progres, pembatalan proses, dan pratinjau klip.
 - Menyiapkan judul, hook, deskripsi, hashtag, kata kunci, serta thumbnail setelah klip dipilih.
@@ -207,7 +207,7 @@ macOS: gunakan `.venv/bin/python` sebagai pengganti `.venv\Scripts\python.exe`. 
 ## Batas versi 0.2
 
 - Input utama berupa tautan YouTube; unggah file lokal dan editor timeline belum tersedia.
-- Hanya keluaran vertikal 720 × 1280; belum ada ekspor 1080p atau rasio lain.
+- Belum ada ekspor 1080p; resolusi bergantung pada rasio yang dipilih (720 × 1280 sampai 1280 × 720).
 - Aset teks berasal dari template, sehingga perlu disunting sesuai konteks.
 - Riwayat belum persisten lintas restart server, dan belum ada installer mandiri.
 - Dipakai sebagai aplikasi pribadi di localhost. Belum mendukung hosting publik, autentikasi pengguna, atau kolaborasi banyak akun.

@@ -1,8 +1,9 @@
 import ClipCard from './ClipCard'
-import type { Clip, MomentLabel } from '../types'
+import type { AspectRatio, Clip, MomentLabel } from '../types'
 
 interface Props {
   clips: Clip[]
+  aspectRatio: AspectRatio
   labels: MomentLabel[]
   selected: Set<string>
   onToggle: (id: string) => void
@@ -14,6 +15,7 @@ interface Props {
 
 export default function ClipGrid({
   clips,
+  aspectRatio,
   labels,
   selected,
   onToggle,
@@ -52,6 +54,7 @@ export default function ClipGrid({
           <ClipCard
             key={clip.id}
             clip={clip}
+            aspectRatio={aspectRatio}
             labels={labels}
             selected={selected.has(clip.id)}
             onToggle={onToggle}

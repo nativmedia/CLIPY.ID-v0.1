@@ -262,7 +262,6 @@ def render_thumbnail(
     dst = Path(dst)
     vf = [
         f"scale=720:-2:flags=lanczos",
-        "crop=720:min(1280\\,ih):(iw-720)/2:0",
     ]
 
     if overlay_text:

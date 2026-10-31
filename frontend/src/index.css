@@ -59,7 +59,7 @@
 .session-options[open] summary { margin-bottom: 16px; }
 .output-panel { padding: 23px; }
 .output-panel h2 { font-size: 14px; font-weight: 600; }
-.portrait-preview { height: 180px; margin: 24px auto; width: 103px; border: 1px solid #555; border-radius: 12px; padding: 12px 9px; display: flex; flex-direction: column; justify-content: space-between; background: #171717; }
+.portrait-preview { height: auto; max-height: 180px; max-width: 100%; margin: 24px auto; width: 150px; border: 1px solid #555; border-radius: 12px; padding: 12px 9px; display: flex; flex-direction: column; justify-content: space-between; background: #171717; }
 .frame-corners { display: grid; place-items: center; flex: 1; color: #9b9b9b; }
 .preview-caption { text-align: center; font-size: 10px; line-height: 1.8; color: #fff; }
 .preview-caption span { display: inline; background: #fff; color: #111; padding: 2px 4px; border-radius: 3px; }
